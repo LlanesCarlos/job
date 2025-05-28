@@ -20,32 +20,29 @@ const icons = [
   PencilSquareIcon,
 ];
 
-const RADIUS_DESKTOP = 12; // in vw
-const RADIUS_MOBILE = 28;  // in vw, bigger orbit on small screens
-
 export default function Home() {
   const [angle, setAngle] = useState(0);
   const [isFlying, setIsFlying] = useState(false);
   const [iconSize, setIconSize] = useState({ width: 48, height: 48 });
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 640);
   const buttonRef = useRef(null);
   const navigate = useNavigate();
-  const iconCount = icons.length;
 
-  // Slow rotation
+  const iconCount = icons.length;
+  const RADIUS = isMobile ? 30 : 12; // in % of container (not vw!)
+
+  // Rotation
   useEffect(() => {
     if (isFlying) return;
     let animationFrameId;
     let lastTimestamp = null;
 
     const rotate = (timestamp) => {
-      if (lastTimestamp === null) {
-        lastTimestamp = timestamp;
-      }
+      if (lastTimestamp === null) lastTimestamp = timestamp;
       const delta = timestamp - lastTimestamp;
 
-      // Rotate slowly: 36 degrees every 1000ms = full 360 in 10s
       if (delta >= 100) {
-        setAngle((a) => (a + 3.6) % 360); // 3.6 degrees every 100ms
+        setAngle((a) => (a + 3.6) % 360);
         lastTimestamp = timestamp;
       }
 
@@ -56,13 +53,15 @@ export default function Home() {
     return () => cancelAnimationFrame(animationFrameId);
   }, [isFlying]);
 
-  // Get button size to match icons
+  // Resize listeners
   useEffect(() => {
-    const updateIconSize = () => {
-      const isMobile = window.innerWidth <= 640; // Tailwind's 'sm' breakpoint
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 640;
+      setIsMobile(mobile);
+
       if (buttonRef.current) {
         const rect = buttonRef.current.getBoundingClientRect();
-        const scale = isMobile ? 0.6 : 1; // Smaller icons on mobile
+        const scale = mobile ? 0.6 : 1;
         setIconSize({
           width: rect.width * scale,
           height: rect.height * scale,
@@ -70,9 +69,9 @@ export default function Home() {
       }
     };
 
-    updateIconSize();
-    window.addEventListener('resize', updateIconSize);
-    return () => window.removeEventListener('resize', updateIconSize);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const handleGetStarted = () => {
@@ -83,19 +82,18 @@ export default function Home() {
   };
 
   return (
-    <div className="w-screen h-screen flex items-center justify-center select-none">
+    <div className="w-screen h-screen flex items-center justify-center overflow-hidden select-none bg-black">
       <div
         className="relative"
         style={{
-          width: window.innerWidth <= 640 ? '80vw' : '24vw',
-          height: window.innerWidth <= 640 ? '80vw' : '24vw',
-          maxWidth: '300px',
-          maxHeight: '300px',
+          width: isMobile ? '80vw' : '24vw',
+          height: isMobile ? '80vw' : '24vw',
+          maxWidth: '320px',
+          maxHeight: '320px',
           minWidth: '200px',
           minHeight: '200px',
         }}
       >
-        {/* Center button */}
         <button
           ref={buttonRef}
           onClick={handleGetStarted}
@@ -105,11 +103,11 @@ export default function Home() {
           Get Started
         </button>
 
-        {/* Orbiting icons */}
         {icons.map((IconComp, i) => {
-          const isMobile = window.innerWidth <= 640;
-          const RADIUS = isMobile ? RADIUS_MOBILE : RADIUS_DESKTOP;
           const theta = ((360 / iconCount) * i + angle) * (Math.PI / 180);
+          const offsetX = RADIUS * Math.cos(theta);
+          const offsetY = RADIUS * Math.sin(theta);
+
           const styles = isFlying
             ? {
                 position: 'absolute',
@@ -123,8 +121,8 @@ export default function Home() {
               }
             : {
                 position: 'absolute',
-                top: `calc(50% + ${RADIUS * Math.sin(theta)}vw)`,
-                left: `calc(50% + ${RADIUS * Math.cos(theta)}vw)`,
+                top: `calc(50% + ${offsetY}%)`,
+                left: `calc(50% + ${offsetX}%)`,
                 transform: 'translate(-50%, -50%)',
                 transition: 'top 0.1s linear, left 0.1s linear',
                 width: `${iconSize.width}px`,
