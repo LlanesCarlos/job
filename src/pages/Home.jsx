@@ -82,7 +82,7 @@ export default function Home() {
   };
 
   return (
-    <div className="w-screen h-screen flex items-center justify-center overflow-hidden select-none bg-black">
+    <div className="w-screen h-screen flex items-center justify-center overflow-hidden select-none">
       <div
         className="relative"
         style={{
