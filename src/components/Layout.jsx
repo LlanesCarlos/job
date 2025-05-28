@@ -9,7 +9,7 @@ export default function Layout() {
         <img
           src="/suitcase.png"
           alt="Suitcase Icon"
-          className="h-5 w-auto sm:h-6 mr-2"
+          className="h-4 sm:h-5 w-auto mr-2" // Smaller icon on mobile
         />
         Job Seeker Survival Kit
       </header>
@@ -25,7 +25,7 @@ export default function Layout() {
           <img
             src="/suitcase.png"
             alt="Suitcase Icon"
-            className="h-4 w-auto sm:h-5"
+            className="h-3 sm:h-4 w-auto" // Even smaller in the footer
           />
           <span>
             &copy; 2025 Job Seeker Survival Kit — All rights reserved.
