@@ -58,9 +58,14 @@ export default function Home() {
   // Get button size to match icons
   useEffect(() => {
     const updateIconSize = () => {
+      const isMobile = window.innerWidth <= 640; // Tailwind's 'sm' breakpoint
       if (buttonRef.current) {
         const rect = buttonRef.current.getBoundingClientRect();
-        setIconSize({ width: rect.width, height: rect.height });
+        const scale = isMobile ? 0.6 : 1; // Smaller icons on mobile
+        setIconSize({
+          width: rect.width * scale,
+          height: rect.height * scale,
+        });
       }
     };
 
