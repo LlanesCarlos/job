@@ -80,7 +80,7 @@ export default function Home() {
   };
 
   // Radius in vw for desktop, in px for mobile (to avoid scrollbars)
-  const RADIUS = isMobile ? 70 : 12; // 60px radius on mobile, 12vw radius on desktop
+  const RADIUS = isMobile ? 100 : 12; // 60px radius on mobile, 12vw radius on desktop
 
   return (
     <div
