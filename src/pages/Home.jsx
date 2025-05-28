@@ -27,18 +27,37 @@ export default function Home() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 640);
   const buttonRef = useRef(null);
   const navigate = useNavigate();
-
   const iconCount = icons.length;
-  const RADIUS = isMobile ? 30 : 12; // in % of container (not vw!)
 
-  // Rotation
+  // Handle resize to detect mobile and update icon size
+  useEffect(() => {
+    function update() {
+      setIsMobile(window.innerWidth <= 640);
+      if (buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect();
+        const scale = window.innerWidth <= 640 ? 0.6 : 1;
+        setIconSize({
+          width: rect.width * scale,
+          height: rect.height * scale,
+        });
+      }
+    }
+    update();
+
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
+  // Slow rotation
   useEffect(() => {
     if (isFlying) return;
     let animationFrameId;
     let lastTimestamp = null;
 
     const rotate = (timestamp) => {
-      if (lastTimestamp === null) lastTimestamp = timestamp;
+      if (lastTimestamp === null) {
+        lastTimestamp = timestamp;
+      }
       const delta = timestamp - lastTimestamp;
 
       if (delta >= 100) {
@@ -53,27 +72,6 @@ export default function Home() {
     return () => cancelAnimationFrame(animationFrameId);
   }, [isFlying]);
 
-  // Resize listeners
-  useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth <= 640;
-      setIsMobile(mobile);
-
-      if (buttonRef.current) {
-        const rect = buttonRef.current.getBoundingClientRect();
-        const scale = mobile ? 0.6 : 1;
-        setIconSize({
-          width: rect.width * scale,
-          height: rect.height * scale,
-        });
-      }
-    };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
   const handleGetStarted = () => {
     setIsFlying(true);
     setTimeout(() => {
@@ -81,32 +79,38 @@ export default function Home() {
     }, 1200);
   };
 
+  // Radius in vw for desktop, in px for mobile (to avoid scrollbars)
+  const RADIUS = isMobile ? 60 : 12; // 60px radius on mobile, 12vw radius on desktop
+
   return (
-    <div className="w-screen h-screen flex items-center justify-center overflow-hidden select-none">
+    <div
+      className="flex justify-center items-center select-none"
+      style={{ height: '100vh' }} // full viewport height
+    >
       <div
-        className="relative"
+        className={`relative ${
+          isMobile ? 'w-[80vw] h-[80vw]' : 'w-[24vw] h-[24vw]'
+        }`}
         style={{
-          width: isMobile ? '80vw' : '24vw',
-          height: isMobile ? '80vw' : '24vw',
-          maxWidth: '320px',
-          maxHeight: '320px',
-          minWidth: '200px',
-          minHeight: '200px',
+          maxWidth: isMobile ? '320px' : '300px',
+          maxHeight: isMobile ? '320px' : '300px',
+          minWidth: isMobile ? '200px' : '200px',
+          minHeight: isMobile ? '200px' : '200px',
         }}
       >
+        {/* Center button */}
         <button
           ref={buttonRef}
           onClick={handleGetStarted}
           disabled={isFlying}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-6 py-3 text-sm sm:text-base rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition disabled:opacity-50 z-20"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-6 py-3 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition disabled:opacity-50 z-20"
         >
           Get Started
         </button>
 
+        {/* Orbiting icons */}
         {icons.map((IconComp, i) => {
           const theta = ((360 / iconCount) * i + angle) * (Math.PI / 180);
-          const offsetX = RADIUS * Math.cos(theta);
-          const offsetY = RADIUS * Math.sin(theta);
 
           const styles = isFlying
             ? {
@@ -121,8 +125,12 @@ export default function Home() {
               }
             : {
                 position: 'absolute',
-                top: `calc(50% + ${offsetY}%)`,
-                left: `calc(50% + ${offsetX}%)`,
+                top: isMobile
+                  ? `calc(50% + ${RADIUS * Math.sin(theta)}px)`
+                  : `calc(50% + ${RADIUS * Math.sin(theta)}vw)`,
+                left: isMobile
+                  ? `calc(50% + ${RADIUS * Math.cos(theta)}px)`
+                  : `calc(50% + ${RADIUS * Math.cos(theta)}vw)`,
                 transform: 'translate(-50%, -50%)',
                 transition: 'top 0.1s linear, left 0.1s linear',
                 width: `${iconSize.width}px`,
